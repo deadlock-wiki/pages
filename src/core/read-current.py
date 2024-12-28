@@ -1,15 +1,16 @@
-import os
 import sys
+import os
 # Import parents
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from src.utils.parameters import Parameters
+params = Parameters()
+
 
 class ReadCurrent:
-    def __init__(self):
-        self.parameters = Parameters()
-        self.username = self.parameters.get_param('BOT_WIKI_USER')
-        self.password = self.parameters.get_param('BOT_WIKI_PASS')
+    def __init__(self, wiki_username, wiki_password):
+        self.username = wiki_username
+        self.password = wiki_password
         print(f'Username: {self.username}')
         print(f'Password: {self.password}')
 
@@ -17,5 +18,6 @@ class ReadCurrent:
         pass
 
 if __name__ == '__main__':
-    read_current = ReadCurrent()
+    params = Parameters()
+    read_current = ReadCurrent(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
     read_current.run()
