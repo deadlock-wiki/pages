@@ -7,6 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from src.utils.parameters import Parameters
 params = Parameters()
 
+from src.core.read_current import ReadCurrent
+
 # setup custom logger
 logger.remove(0)
 log_level = 'TRACE' if params.is_truthy('VERBOSE') else 'INFO'
