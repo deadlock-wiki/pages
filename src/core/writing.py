@@ -14,8 +14,8 @@ class PageWriter:
 
     def _load_resources(self, resource_types_data_path):
         if not os.path.exists(resource_types_data_path):
-            raise Exception(f'Resource map not found at {self.resource_map_path}, ensure reading has been done first.')
-        with open(self.resource_map_path, 'r') as f:
+            raise Exception(f'Resources not found at {self.resource_data_path}, ensure reading has been done first.')
+        with open(self.resource_data_path, 'r') as f:
             return json.load(f)
         
     def _write_resource_pages(self):
@@ -25,11 +25,13 @@ class PageWriter:
         # Remove / create dirs
         validate_dir('./data/resource-pages/new')
 
-        for resource_type, resource_type_map in self.self.resource_types_data.items():
-            for resource_key, resource_map in resource_type_map.items():
-                file_name = f'./data/resource-pages/new/{resource_key}.txt'
-                with open(file_name, 'w') as f:
-                    f.write(resource_map['content'])
+        for resource_type, resource_type_data in self.self.resource_types_data.items():
+            for resource_key, resource_data in resource_type_data.items():
+                self._write_resource_page(resource_key, resource_data)
+
+    def _write_resource_page(self, resource_data):
+        localized_name = resource_data['Localized']
+        is_disabled = resource_data['IsDisabled']
         
         
 
