@@ -18,6 +18,31 @@ class Wiki:
         self.site.login(self.auth['user'], self.auth['password'])
 
     def _get_namespace_id(self, search_namespace):
+        """ 
+        Retrieve the namespace id from a namespace name
+        Namespace is used for site.allpages[] dict
+        """
         for namespace_id, namespace in self.site.namespaces.items():
             if namespace == search_namespace:
                 return namespace_id
+            
+        raise Exception(f'Namespace {search_namespace} not found')
+    
+    def get_prefixed_page_names(self, prefix, namespace):
+        """
+        Retrieve all page names under a specific namespace and have a prefix.
+        prefix should not contain the namespace, e.g. 'DeadBot/blueprints/'
+        """
+        
+        namespace_id = self._get_namespace_id(namespace)
+
+        # Blueprint pages are all subpages of User:DeadBot/blueprints/
+        page_names = []
+        
+        # Retrieve all subpages
+        page_objs = self.site.allpages(prefix=prefix, 
+                                                 namespace=namespace_id)
+        for page in page_objs:
+            page_names.append(page.name)
+
+        return page_names
