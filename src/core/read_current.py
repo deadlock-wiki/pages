@@ -22,6 +22,22 @@ class ReadCurrent:
     def __init__(self, wiki_obj):
         self.wiki_obj = wiki_obj
 
+    def _get_blueprint_pages(self):
+        """Retrieve's the text of all blueprint pages and saves them"""
+        logger.trace('Reading blueprint pages')
+
+        # Remove / create dirs
+        validate_dir('./data/blueprints')
+
+        # Retrieve blueprint page names
+        blueprint_page_names = self.wiki_obj.get_prefixed_page_names('DeadBot/blueprints/', 
+                                                                      'User')
+        
+        # Read their content and save it to data
+        for page_name in blueprint_page_names:
+            file_name = f'./data/blueprints/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
+            self._read_write_page(page_name, file_name)
+
     def _get_data_pages(self):
         """Retrieve's the text of all data pages and saves them"""
         logger.trace('Reading data pages')
@@ -37,22 +53,6 @@ class ReadCurrent:
         # Read their content and save it to data
         for page_name in data_page_names:
             file_name = f'./data/data-pages/{page_name.replace("Data:", "")}'
-            self._read_write_page(page_name, file_name)
-
-    def _get_blueprint_pages(self):
-        """Retrieve's the text of all blueprint pages and saves them"""
-        logger.trace('Reading blueprint pages')
-
-        # Remove / create dirs
-        validate_dir('./data/blueprints')
-
-        # Retrieve blueprint page names
-        blueprint_page_names = self.wiki_obj.get_prefixed_page_names('DeadBot/blueprints/', 
-                                                                      'User')
-        
-        # Read their content and save it to data
-        for page_name in blueprint_page_names:
-            file_name = f'./data/blueprints/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
             self._read_write_page(page_name, file_name)
 
     def _get_resource_pages(self):
