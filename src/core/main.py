@@ -5,7 +5,8 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
-from src.core.read_current import ReadCurrent
+from src.core.reading import PageReader
+from src.core.writing import PageWriter
 
 params = Parameters()
 
@@ -26,5 +27,8 @@ logger.add(
 # logger.error("This is an error message") - always shown
 
 wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
-read_current = ReadCurrent(wiki)
-#read_current.run()
+page_reader = PageReader(wiki)
+page_reader.run()
+
+page_writer = PageWriter()
+page_writer.run()
