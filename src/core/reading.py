@@ -63,7 +63,7 @@ class PageReader:
         if not os.path.exists(path):
             raise Exception(f'Data page {path} was expected to exist, but does not.')
         
-        resource_type_maps = dict()
+        resource_types_data = dict()
         with open(f'./data/data-pages/{data_page_path}', 'r') as file:
             data = json.load(file)
             for key, value in data.items():
@@ -75,14 +75,14 @@ class PageReader:
                 if resource_name_en is None or '[Deprecated]' in resource_name_en:
                     continue
                 
-                resource_type_maps[resource_key] = {
+                resource_types_data[resource_key] = {
                     'Localized': resource_name_en,
                     'IsDisabled': is_disabled
                     }
 
-        return resource_type_maps
+        return resource_types_data
     
-    def _process_resource_types(self):
+    def _process_resource_types_data(self):
         """
         Processes all resource types and returns a dict of them
         1st layer - resource type
@@ -94,23 +94,23 @@ class PageReader:
             resources[resource_type] = self._process_resource_type(resource_type_file_name)
         
         # Output to file for reference
-        resource_type_maps_path = './data/resource-pages/resource_type_maps.json'
-        with open(resource_type_maps_path, 'w') as file:
+        resource_types_data_path = './data/resource-pages/resource_types_data.json'
+        with open(resource_types_data_path, 'w') as file:
             json.dump(resources, file, indent=4)
 
         return resources
 
-    def _get_resource_pages(self, resource_type_maps):
+    def _get_resource_pages(self, resource_types_data):
         """Retrieves the text of all resource pages and saves them"""
         logger.trace('Reading resource pages')
 
         # Remove / create dirs
         validate_dir('./data/resource-pages/current')
 
-        for resource_type, resource_type_map in resource_type_maps.items():
-            logger.trace(f'Reading {len(resource_type_map)} {resource_type} pages')
-            for resource_key, resource_map in resource_type_map.items():
-                resource_name = resource_map['Localized']
+        for resource_type, resource_type_data in resource_types_data.items():
+            logger.trace(f'Reading {len(resource_type_data)} {resource_type} pages')
+            for resource_key, resource_data in resource_type_data.items():
+                resource_name = resource_data['Localized']
                 file_name = f'./data/resource-pages/current/{resource_type}/{resource_name}.txt'
                 self._read_write_page(resource_name, file_name)
 
@@ -136,7 +136,7 @@ class PageReader:
         logger.info('Reading current wiki data')
         #self._get_blueprint_pages()
         #self._get_data_pages()
-        resources = self._process_resource_types()
+        resources = self._process_resource_types_data()
         #self._get_resource_pages(resources)
         
 
