@@ -100,9 +100,9 @@ class PageReader:
 
         return resource_types_data
 
-    def _get_resource_pages(self, resource_types_data):
-        """Retrieves the text of all resource pages and saves them"""
-        logger.trace('Reading resource pages')
+    def _get_tracked_pages(self, resource_types_data):
+        """Retrieves the text of all tracked pages and saves them"""
+        logger.trace('Reading tracked pages')
 
         # Remove / create dirs
         validate_dir('./data/tracked-pages/current')
@@ -152,8 +152,8 @@ class PageReader:
         logger.info('Reading current wiki data')
         #self._get_blueprint_pages()
         #self._get_data_pages()
-        resource_types_data = self._process_resource_types_data()
-        self._get_resource_pages(resource_types_data)
+        #resource_types_data = self._process_resource_types_data()
+        #self._get_tracked_pages(resource_types_data)
         
 
 if __name__ == '__main__':
