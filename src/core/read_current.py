@@ -24,7 +24,7 @@ class ReadCurrent:
 
     def _get_data_pages(self):
         """Retrieve's the text of all data pages and saves them"""
-        logger.info('Reading data pages')
+        logger.trace('Reading data pages')
 
         # Remove / create dirs
         validate_dir('./data/data-pages')
@@ -41,7 +41,7 @@ class ReadCurrent:
 
     def _get_blueprint_pages(self):
         """Retrieve's the text of all blueprint pages and saves them"""
-        logger.info('Reading blueprint pages')
+        logger.trace('Reading blueprint pages')
 
         # Remove / create dirs
         validate_dir('./data/blueprints')
@@ -50,11 +50,17 @@ class ReadCurrent:
         blueprint_page_names = self.wiki_obj.get_prefixed_page_names('DeadBot/blueprints/', 
                                                                       'User')
         
-        print(blueprint_page_names)
         # Read their content and save it to data
         for page_name in blueprint_page_names:
             file_name = f'./data/blueprints/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
             self._read_write_page(page_name, file_name)
+
+    def _get_resource_pages(self):
+        """Retrieve's the text of all resource pages and saves them"""
+        logger.trace('Reading resource pages')
+
+        # Remove / create dirs
+        validate_dir('./data/resource-pages/current')
 
     def _read_write_page(self, page_name, file_name):
         """Reads the text of a page and writes it to a json file"""
@@ -65,6 +71,7 @@ class ReadCurrent:
         # Create the parent directories
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         
+        # Write the file
         if file_name.endswith('.json'):
             data = json.loads(page_text)
             with open(file_name, 'w') as file:
@@ -74,8 +81,11 @@ class ReadCurrent:
                 file.write(page_text)
 
     def run(self):
+        logger.info('Reading current wiki data')
+        #self._get_blueprint_pages()
         #self._get_data_pages()
-        self._get_blueprint_pages()
+        
+        self._get_resource_pages()
         
 
 if __name__ == '__main__':
