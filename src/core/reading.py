@@ -72,7 +72,7 @@ class PageReader:
                 is_disabled = value['IsDisabled']
 
                 # Skip resource if...
-                if resource_name_en is None or '[Deprecated]' in resource_name_en:
+                if resource_name_en is None or 'Deprecated' in resource_name_en:
                     continue
                 
                 resource_types_data[resource_key] = {
@@ -88,34 +88,50 @@ class PageReader:
         1st layer - resource type
         2nd layer - resource key : resource english name
         """
-        resources = dict()
+        resource_types_data = dict()
         for resource_type_file_name in os.listdir('./data/data-pages'):
             resource_type = resource_type_file_name.split('Data.json')[0]
-            resources[resource_type] = self._process_resource_type(resource_type_file_name)
+            resource_types_data[resource_type] = self._process_resource_type(resource_type_file_name)
         
         # Output to file for reference
-        resource_types_data_path = './data/resource-pages/resource_types_data.json'
+        resource_types_data_path = './data/tracked-pages/resource_types_data.json'
         with open(resource_types_data_path, 'w') as file:
-            json.dump(resources, file, indent=4)
+            json.dump(resource_types_data, file, indent=4)
 
-        return resources
+        return resource_types_data
 
     def _get_resource_pages(self, resource_types_data):
         """Retrieves the text of all resource pages and saves them"""
         logger.trace('Reading resource pages')
 
         # Remove / create dirs
-        validate_dir('./data/resource-pages/current')
+        validate_dir('./data/tracked-pages/current')
 
         for resource_type, resource_type_data in resource_types_data.items():
-            logger.trace(f'Reading {len(resource_type_data)} {resource_type} pages')
+            logger.trace(f'Reading {resource_type} pages')
             for resource_key, resource_data in resource_type_data.items():
                 resource_name = resource_data['Localized']
-                file_name = f'./data/resource-pages/current/{resource_type}/{resource_name}.txt'
-                self._read_write_page(resource_name, file_name)
+                is_disabled = resource_data['IsDisabled']
+                if is_disabled:
+                    continue
+
+                def _read_write_page_wrapper(resource_type, resource_name, sub_pages:list[str]=[]):
+                    current_data_dir = './data/tracked-pages/current/'
+
+                    if len(sub_pages) == 0:
+                        self._read_write_page(resource_name, f'{current_data_dir}/{resource_type}/{resource_name}.txt')
+                    else:
+                        for sub_page in sub_pages:
+                            self._read_write_page(resource_name+'/'+sub_page, f'{current_data_dir}/{resource_type}/{resource_name}/{sub_page}.txt')
+
+                # Read all pages
+                if resource_type == 'Ability':
+                    _read_write_page_wrapper(resource_type, resource_name, ['Notes'])
+                _read_write_page_wrapper(resource_type, resource_name, ['Update history'])
+                _read_write_page_wrapper(resource_type, resource_name)
 
     def _read_write_page(self, page_name, file_name):
-        """Reads the text of a page and writes it to a json file"""
+        """Reads the text of a page and writes it to a file"""
 
         page = self.wiki_obj.site.pages[page_name]
         page_text = page.text()
@@ -136,8 +152,8 @@ class PageReader:
         logger.info('Reading current wiki data')
         #self._get_blueprint_pages()
         #self._get_data_pages()
-        resources = self._process_resource_types_data()
-        #self._get_resource_pages(resources)
+        resource_types_data = self._process_resource_types_data()
+        self._get_resource_pages(resource_types_data)
         
 
 if __name__ == '__main__':
