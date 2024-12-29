@@ -3,11 +3,11 @@ import os
 import sys
 # Import parents
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-
+from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
-params = Parameters()
-
 from src.core.read_current import ReadCurrent
+
+params = Parameters()
 
 # setup custom logger
 logger.remove(0)
@@ -25,5 +25,6 @@ logger.add(
 #   should be able to decide if they need to take action
 # logger.error("This is an error message") - always shown
 
-logger.trace('Trace Test')
-logger.info('Info Test')
+wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
+read_current = ReadCurrent(wiki)
+read_current.run()
