@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 # Import parents
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
@@ -7,11 +8,10 @@ from loguru import logger
 from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
 from src.utils.file import validate_dir
-import json
 params = Parameters()
 
 
-class ReadCurrent:
+class PageReader:
     """
     Retrieves
     - Data pages such as Data:HeroData.json
@@ -56,16 +56,14 @@ class ReadCurrent:
             self._read_write_page(page_name, file_name)
 
     def _process_resource_type(self, data_page_path):
-        """From a data page, retrieve key:name pairs for each resource]"""
-        # The data page's dict's keys are the keys, and their "Name"
-        # values are the resource page names
+        """From a data page, retrieve relevant info for each resource]"""
 
         # Read data to dict
         path = f'./data/data-pages/{data_page_path}'
         if not os.path.exists(path):
             raise Exception(f'Data page {path} was expected to exist, but does not.')
         
-        resource_map = dict()
+        resource_type_maps = dict()
         with open(f'./data/data-pages/{data_page_path}', 'r') as file:
             data = json.load(file)
             for key, value in data.items():
@@ -74,12 +72,15 @@ class ReadCurrent:
                 is_disabled = value['IsDisabled']
 
                 # Skip resource if...
-                if resource_name_en is None or is_disabled or '[Deprecated]' in resource_name_en:
+                if resource_name_en is None or '[Deprecated]' in resource_name_en:
                     continue
                 
-                resource_map[resource_key] = resource_name_en
+                resource_type_maps[resource_key] = {
+                    'Localized': resource_name_en,
+                    'IsDisabled': is_disabled
+                    }
 
-        return resource_map
+        return resource_type_maps
     
     def _process_resource_types(self):
         """
@@ -93,25 +94,25 @@ class ReadCurrent:
             resources[resource_type] = self._process_resource_type(resource_type_file_name)
         
         # Output to file for reference
-        resource_map_path = './data/resource-pages/resource_map.json'
-        with open(resource_map_path, 'w') as file:
+        resource_type_maps_path = './data/resource-pages/resource_type_maps.json'
+        with open(resource_type_maps_path, 'w') as file:
             json.dump(resources, file, indent=4)
 
         return resources
 
-    def _get_resource_pages(self, resource_map):
+    def _get_resource_pages(self, resource_type_maps):
         """Retrieves the text of all resource pages and saves them"""
         logger.trace('Reading resource pages')
 
         # Remove / create dirs
         validate_dir('./data/resource-pages/current')
 
-        for resource_type, resource_key_name_map in resource_map.items():
-            logger.trace(f'Reading {len(resource_key_name_map)} {resource_type} pages')
-            for resource_key, resource_name in resource_key_name_map.items():
-                page_name = resource_name
+        for resource_type, resource_type_map in resource_type_maps.items():
+            logger.trace(f'Reading {len(resource_type_map)} {resource_type} pages')
+            for resource_key, resource_map in resource_type_map.items():
+                resource_name = resource_map['Localized']
                 file_name = f'./data/resource-pages/current/{resource_type}/{resource_name}.txt'
-                self._read_write_page(page_name, file_name)
+                self._read_write_page(resource_name, file_name)
 
     def _read_write_page(self, page_name, file_name):
         """Reads the text of a page and writes it to a json file"""
@@ -133,14 +134,14 @@ class ReadCurrent:
 
     def run(self):
         logger.info('Reading current wiki data')
-        self._get_blueprint_pages()
-        self._get_data_pages()
+        #self._get_blueprint_pages()
+        #self._get_data_pages()
         resources = self._process_resource_types()
-        self._get_resource_pages(resources)
+        #self._get_resource_pages(resources)
         
 
 if __name__ == '__main__':
     params = Parameters()
     wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
-    read_current = ReadCurrent(wiki)
+    read_current = PageReader(wiki)
     read_current.run()
