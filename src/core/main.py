@@ -27,4 +27,4 @@ logger.add(
 
 wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
 read_current = ReadCurrent(wiki)
-read_current.run()
+#read_current.run()
