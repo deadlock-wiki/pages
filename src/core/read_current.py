@@ -55,8 +55,52 @@ class ReadCurrent:
             file_name = f'./data/data-pages/{page_name.replace("Data:", "")}'
             self._read_write_page(page_name, file_name)
 
+    def _process_resource_type(self, data_page_path):
+        """From a data page, retrieve key:name pairs for each resource]"""
+        # The data page's dict's keys are the keys, and their "Name"
+        # values are the resource page names
+        print(data_page_path)
+
+        # Read data to dict
+        path = f'./data/data-pages/{data_page_path}'
+        if not os.path.exists(path):
+            raise Exception(f'Data page {path} was expected to exist, but does not.')
+        
+        resource_map = dict()
+        with open(f'./data/data-pages/{data_page_path}', 'r') as file:
+            data = json.load(file)
+            for key, value in data.items():
+                resource_key = key
+                resource_name_en = value['Name']
+
+                # Skip if missing or deprecated localization
+                if resource_name_en is None or '[Deprecated]' in resource_name_en:
+                    continue
+                
+                resource_map[resource_key] = resource_name_en
+
+        return resource_map
+    
+    def _process_resource_types(self):
+        """
+        Processes all resource types and returns a dict of them
+        1st layer - resource type
+        2nd layer - resource key : resource english name
+        """
+        resources = dict()
+        for resource_type_file_name in os.listdir('./data/data-pages'):
+            resource_type = resource_type_file_name.split('Data.json')[0]
+            resources[resource_type] = self._process_resource_type(resource_type_file_name)
+        
+        # Output to file for reference
+        resource_map_path = './data/resource-pages/resource_map.json'
+        with open(resource_map_path, 'w') as file:
+            json.dump(resources, file, indent=4)
+
+        return resources
+
     def _get_resource_pages(self):
-        """Retrieve's the text of all resource pages and saves them"""
+        """Retrieves the text of all resource pages and saves them"""
         logger.trace('Reading resource pages')
 
         # Remove / create dirs
@@ -84,8 +128,9 @@ class ReadCurrent:
         logger.info('Reading current wiki data')
         #self._get_blueprint_pages()
         #self._get_data_pages()
-        
-        self._get_resource_pages()
+        resources = self._process_resource_types()
+
+        #self._get_resource_pages()
         
 
 if __name__ == '__main__':
