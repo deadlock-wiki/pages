@@ -59,7 +59,6 @@ class ReadCurrent:
         """From a data page, retrieve key:name pairs for each resource]"""
         # The data page's dict's keys are the keys, and their "Name"
         # values are the resource page names
-        print(data_page_path)
 
         # Read data to dict
         path = f'./data/data-pages/{data_page_path}'
@@ -72,9 +71,10 @@ class ReadCurrent:
             for key, value in data.items():
                 resource_key = key
                 resource_name_en = value['Name']
+                is_disabled = value['IsDisabled']
 
-                # Skip if missing or deprecated localization
-                if resource_name_en is None or '[Deprecated]' in resource_name_en:
+                # Skip resource if...
+                if resource_name_en is None or is_disabled or '[Deprecated]' in resource_name_en:
                     continue
                 
                 resource_map[resource_key] = resource_name_en
@@ -99,12 +99,19 @@ class ReadCurrent:
 
         return resources
 
-    def _get_resource_pages(self):
+    def _get_resource_pages(self, resource_map):
         """Retrieves the text of all resource pages and saves them"""
         logger.trace('Reading resource pages')
 
         # Remove / create dirs
         validate_dir('./data/resource-pages/current')
+
+        for resource_type, resource_key_name_map in resource_map.items():
+            logger.trace(f'Reading {len(resource_key_name_map)} {resource_type} pages')
+            for resource_key, resource_name in resource_key_name_map.items():
+                page_name = resource_name
+                file_name = f'./data/resource-pages/current/{resource_type}/{resource_name}.txt'
+                self._read_write_page(page_name, file_name)
 
     def _read_write_page(self, page_name, file_name):
         """Reads the text of a page and writes it to a json file"""
@@ -126,11 +133,10 @@ class ReadCurrent:
 
     def run(self):
         logger.info('Reading current wiki data')
-        #self._get_blueprint_pages()
-        #self._get_data_pages()
+        self._get_blueprint_pages()
+        self._get_data_pages()
         resources = self._process_resource_types()
-
-        #self._get_resource_pages()
+        self._get_resource_pages(resources)
         
 
 if __name__ == '__main__':
