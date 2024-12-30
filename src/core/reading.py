@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from loguru import logger
 from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
-from src.utils.file import validate_dir
+from src.utils.file import validate_dir, read_file, write_file
 params = Parameters()
 
 
@@ -64,21 +64,22 @@ class PageReader:
             raise Exception(f'Data page {path} was expected to exist, but does not.')
         
         resource_types_data = dict()
-        with open(f'./data/data-pages/{data_page_path}', 'r') as file:
-            data = json.load(file)
-            for key, value in data.items():
-                resource_key = key
-                resource_name_en = value['Name']
-                is_disabled = value['IsDisabled']
+        path = f'./data/data-pages/{data_page_path}'
+        data = read_file(path)
+        
+        for key, value in data.items():
+            resource_key = key
+            resource_name_en = value['Name']
+            is_disabled = value['IsDisabled']
 
-                # Skip resource if...
-                if resource_name_en is None or 'Deprecated' in resource_name_en:
-                    continue
-                
-                resource_types_data[resource_key] = {
-                    'Localized': resource_name_en,
-                    'IsDisabled': is_disabled
-                    }
+            # Skip resource if...
+            if resource_name_en is None or 'Deprecated' in resource_name_en:
+                continue
+            
+            resource_types_data[resource_key] = {
+                'Localized': resource_name_en,
+                'IsDisabled': is_disabled
+                }
 
         return resource_types_data
     
@@ -95,8 +96,7 @@ class PageReader:
         
         # Output to file for reference
         resource_types_data_path = './data/tracked-pages/resource_types_data.json'
-        with open(resource_types_data_path, 'w') as file:
-            json.dump(resource_types_data, file, indent=4)
+        write_file(resource_types_data_path, resource_types_data)
 
         return resource_types_data
 
@@ -140,20 +140,14 @@ class PageReader:
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         
         # Write the file
-        if file_name.endswith('.json'):
-            data = json.loads(page_text)
-            with open(file_name, 'w') as file:
-                json.dump(data, file, indent=4)
-        elif file_name.endswith('.txt'):
-            with open(file_name, 'w', encoding='utf-8') as file:
-                file.write(page_text)
-
+        write_file(file_name, page_text)
+        
     def run(self):
         logger.info('Reading current wiki data')
-        #self._get_blueprint_pages()
-        #self._get_data_pages()
-        #resource_types_data = self._process_resource_types_data()
-        #self._get_tracked_pages(resource_types_data)
+        self._get_blueprint_pages()
+        self._get_data_pages()
+        resource_types_data = self._process_resource_types_data()
+        self._get_tracked_pages(resource_types_data)
         
 
 if __name__ == '__main__':
