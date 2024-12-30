@@ -17,24 +17,36 @@ class PageWriter:
             raise Exception(f'Resources not found at {resource_types_data_path}, ensure reading has been done first.')
         with open(resource_types_data_path, 'r', encoding='utf-8') as f:
             return json.load(f)
+        
+    def _write_tracked_pages(self):
+        """Write all tracked pages"""
+        for resource_type, resource_type_data in self.resource_types_data.items():
+            for page_title_key, resource_data in resource_type_data.items():
+                resource_name = resource_data['Localized']
+                if resource_data['IsDisabled']:
+                    continue
+                current_data_dir = './data/tracked-pages/current'
+                path = f'{current_data_dir}/{resource_type}/{resource_name}'
+                self._write_tracked_dir(path, page_title_key)
+                self._write_tracked_file(f'{path}.txt', page_title_key)
 
-    def _write_tracked_dir(self, dir_path):
+    def _write_tracked_dir(self, dir_path, page_title_key):
         """Write all tracked files in a directory"""
         
         # If the dir is actually a file
         if os.path.isfile(dir_path):
-            self._write_tracked_file(dir_path)
+            self._write_tracked_file(dir_path, page_title_key)
 
         # Recursive call subdirs
         elif os.path.exists(dir_path):
             # Iterate files
             for file_or_subdir in os.listdir(dir_path):
-                self._write_tracked_dir(f'{dir_path}/{file_or_subdir}')
+                self._write_tracked_dir(f'{dir_path}/{file_or_subdir}', page_title_key)
             
         else:
             raise Exception(f'This should never happen, how did we get here? This dir does not exist {dir_path}')
         
-    def _write_tracked_file(self, file_path):
+    def _write_tracked_file(self, file_path, page_title_key):
         current_data_path = file_path
         new_data_path = file_path.replace('/current/', '/new/')
 
@@ -59,15 +71,18 @@ class PageWriter:
         else:
             new_data = self._merge_data(current_data, blueprint_data)
 
+        # Embed resource key
+        new_data = new_data.replace('<key>', page_title_key)
+
         # Write new data
-        if new_data is None:
+        if new_data == '':
             return
         os.makedirs(os.path.dirname(new_data_path), exist_ok=True)
         with open(new_data_path, 'w', encoding='utf-8') as f:
             f.write(new_data)
         
     def _merge_data(self, current_data, blueprint_data):
-        return None
+        return ''
 
     def _get_blueprint_path(self, current_page_path):
         """Determine the blueprint path for a resource page
@@ -93,8 +108,7 @@ class PageWriter:
         # Remove / create dirs
         validate_dir('./data/tracked-pages/new')
 
-        current_data_dir = './data/tracked-pages/current'
-        self._write_tracked_dir(current_data_dir)
+        self._write_tracked_pages()
 
 if __name__ == '__main__':
     page_writer = PageWriter()
