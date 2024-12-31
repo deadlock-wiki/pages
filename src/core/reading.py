@@ -7,7 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from loguru import logger
 from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
-from src.utils.file import validate_dir
+from src.utils.file import validate_dir, read_file, write_file
+from src.utils.constants import DIRS
 params = Parameters()
 
 
@@ -27,7 +28,7 @@ class PageReader:
         logger.trace('Reading blueprint pages')
 
         # Remove / create dirs
-        validate_dir('./data/blueprints')
+        validate_dir(DIRS['blueprints'])
 
         # Retrieve blueprint page names
         blueprint_page_names = self.wiki_obj.get_prefixed_page_names('DeadBot/blueprints/', 
@@ -35,7 +36,7 @@ class PageReader:
         
         # Read their content and save it to data
         for page_name in blueprint_page_names:
-            file_name = f'./data/blueprints/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
+            file_name = f'{DIRS['blueprints']}/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
             self._read_write_page(page_name, file_name)
 
     def _get_data_pages(self):
@@ -43,7 +44,7 @@ class PageReader:
         logger.trace('Reading data pages')
 
         # Remove / create dirs
-        validate_dir('./data/data-pages')
+        validate_dir(DIRS['data-pages'])
         
         # Retrieve data page names
         data_page_names = ['Data:AbilityData.json',
@@ -52,33 +53,32 @@ class PageReader:
 
         # Read their content and save it to data
         for page_name in data_page_names:
-            file_name = f'./data/data-pages/{page_name.replace("Data:", "")}'
+            file_name = f'{DIRS['data-pages']}/{page_name.replace("Data:", "")}'
             self._read_write_page(page_name, file_name)
 
     def _process_resource_type(self, data_page_path):
         """From a data page, retrieve relevant info for each resource]"""
 
         # Read data to dict
-        path = f'./data/data-pages/{data_page_path}'
-        if not os.path.exists(path):
-            raise Exception(f'Data page {path} was expected to exist, but does not.')
-        
+        path = f'{DIRS['data-pages']}/{data_page_path}'
+        data = read_file(path)
         resource_types_data = dict()
-        with open(f'./data/data-pages/{data_page_path}', 'r') as file:
-            data = json.load(file)
-            for key, value in data.items():
-                resource_key = key
-                resource_name_en = value['Name']
-                is_disabled = value['IsDisabled']
+        
+        for key, value in data.items():
+            resource_key = key
+            resource_name_en = value['Name']
+            is_disabled = value.get('IsDisabled', False)#value['IsDisabled']
+            if is_disabled is None:
+                raise Exception(f'No IsDisabled for resource {resource_name_en}')
 
-                # Skip resource if...
-                if resource_name_en is None or 'Deprecated' in resource_name_en:
-                    continue
-                
-                resource_types_data[resource_key] = {
-                    'Localized': resource_name_en,
-                    'IsDisabled': is_disabled
-                    }
+            # Skip resource if...
+            if resource_name_en is None or 'Deprecated' in resource_name_en:
+                continue
+            
+            resource_types_data[resource_key] = {
+                'Localized': resource_name_en,
+                'IsDisabled': is_disabled
+                }
 
         return resource_types_data
     
@@ -89,14 +89,13 @@ class PageReader:
         2nd layer - resource key : resource english name
         """
         resource_types_data = dict()
-        for resource_type_file_name in os.listdir('./data/data-pages'):
+        for resource_type_file_name in os.listdir(DIRS['data-pages']):
             resource_type = resource_type_file_name.split('Data.json')[0]
             resource_types_data[resource_type] = self._process_resource_type(resource_type_file_name)
         
         # Output to file for reference
-        resource_types_data_path = './data/tracked-pages/resource_types_data.json'
-        with open(resource_types_data_path, 'w') as file:
-            json.dump(resource_types_data, file, indent=4)
+        resource_types_data_path = DIRS['resource-types']
+        write_file(resource_types_data_path, resource_types_data)
 
         return resource_types_data
 
@@ -105,7 +104,7 @@ class PageReader:
         logger.trace('Reading tracked pages')
 
         # Remove / create dirs
-        validate_dir('./data/tracked-pages/current')
+        validate_dir(DIRS['current-pages'])
 
         for resource_type, resource_type_data in resource_types_data.items():
             logger.trace(f'Reading {resource_type} pages')
@@ -116,7 +115,7 @@ class PageReader:
                     continue
 
                 def _read_write_page_wrapper(resource_type, resource_name, sub_pages:list[str]=[]):
-                    current_data_dir = './data/tracked-pages/current/'
+                    current_data_dir = f'{DIRS['current-pages']}/'
 
                     if len(sub_pages) == 0:
                         self._read_write_page(resource_name, f'{current_data_dir}/{resource_type}/{resource_name}.txt')
@@ -140,20 +139,14 @@ class PageReader:
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         
         # Write the file
-        if file_name.endswith('.json'):
-            data = json.loads(page_text)
-            with open(file_name, 'w') as file:
-                json.dump(data, file, indent=4)
-        elif file_name.endswith('.txt'):
-            with open(file_name, 'w', encoding='utf-8') as file:
-                file.write(page_text)
-
+        write_file(file_name, page_text)
+        
     def run(self):
         logger.info('Reading current wiki data')
-        #self._get_blueprint_pages()
-        #self._get_data_pages()
-        #resource_types_data = self._process_resource_types_data()
-        #self._get_tracked_pages(resource_types_data)
+        self._get_blueprint_pages()
+        self._get_data_pages()
+        resource_types_data = self._process_resource_types_data()
+        self._get_tracked_pages(resource_types_data)
         
 
 if __name__ == '__main__':

@@ -6,17 +6,18 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from loguru import logger
 from src.utils.parameters import Parameters
-from src.utils.file import validate_dir
+from src.utils.file import validate_dir, read_file, write_file
+from src.utils.constants import DIRS
 
 class PageWriter:
     def __init__(self):
-        self.resource_types_data = self._load_resources('./data/tracked-pages/resource_types_data.json')
+        self.resource_types_data = self._load_resources(DIRS['resource-types'])
 
     def _load_resources(self, resource_types_data_path):
-        if not os.path.exists(resource_types_data_path):
+        data = read_file(resource_types_data_path, if_no_exist=None)
+        if data is None:
             raise Exception(f'Resources not found at {resource_types_data_path}, ensure reading has been done first.')
-        with open(resource_types_data_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        return data
         
     def _write_tracked_pages(self):
         """Write all tracked pages"""
@@ -25,8 +26,7 @@ class PageWriter:
                 resource_name = resource_data['Localized']
                 if resource_data['IsDisabled']:
                     continue
-                current_data_dir = './data/tracked-pages/current'
-                path = f'{current_data_dir}/{resource_type}/{resource_name}'
+                path = f'{DIRS['current-pages']}/{resource_type}/{resource_name}'
                 self._write_tracked_dir(path, page_title_key)
                 self._write_tracked_file(f'{path}.txt', page_title_key)
 
@@ -54,14 +54,12 @@ class PageWriter:
         blueprint_path = self._get_blueprint_path(current_data_path)
         
         # Load current data
-        with open(current_data_path, 'r', encoding='utf-8') as f:
-            current_data = f.read()
+        current_data = read_file(current_data_path)
         
         # Load blueprint data
-        if not os.path.exists(blueprint_path):
-            return #only supporting currently added blueprints
-        with open(blueprint_path, 'r', encoding='utf-8') as f:
-            blueprint_data = f.read()
+        blueprint_data = read_file(blueprint_path, if_no_exist=None)
+        if blueprint_data is None:
+            return#only supporting currently added blueprints
 
         # If current data is empty, it means the page doesn't exist
         # so we initialize with the blueprint data
@@ -78,8 +76,7 @@ class PageWriter:
         if new_data == '':
             return
         os.makedirs(os.path.dirname(new_data_path), exist_ok=True)
-        with open(new_data_path, 'w', encoding='utf-8') as f:
-            f.write(new_data)
+        write_file(new_data_path, new_data)
         
     def _merge_data(self, current_data, blueprint_data):
         return ''
@@ -90,14 +87,14 @@ class PageWriter:
         ./data/tracked-pages/current/Ability/<ability_name>/Notes.txt -> ./data/blueprints/Ability/Notes.txt
         """
         # Determine ability name from current_page_path
-        resource_type = current_page_path.split('./data/tracked-pages/current/')[-1].split('/')[0] # Ability
-        full_page_name = current_page_path.split(f'./data/tracked-pages/current/{resource_type}')[-1].split('.txt')[0] # /<ability_name>/Notes
+        resource_type = current_page_path.split(f'{DIRS['current-pages']}/')[-1].split('/')[0] # Ability
+        full_page_name = current_page_path.split(f'{DIRS['current-pages']}/{resource_type}')[-1].split('.txt')[0] # /<ability_name>/Notes
         second_slash_index = full_page_name.find('/', 2)
         if second_slash_index == -1:
             sub_page_name = ''
         else:
             sub_page_name = full_page_name[full_page_name.find('/', 2):] # /Notes
-        blueprint_path = f'./data/blueprints/{resource_type}{sub_page_name}.txt'
+        blueprint_path = f'{DIRS['blueprints']}/{resource_type}{sub_page_name}.txt'
         
         return blueprint_path # ./data/blueprints/Ability/Notes.txt
         
@@ -106,7 +103,7 @@ class PageWriter:
         logger.info('Writing tracked pages')
         
         # Remove / create dirs
-        validate_dir('./data/tracked-pages/new')
+        validate_dir(DIRS['new-pages'])
 
         self._write_tracked_pages()
 
