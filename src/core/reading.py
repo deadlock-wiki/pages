@@ -60,17 +60,15 @@ class PageReader:
 
         # Read data to dict
         path = f'./data/data-pages/{data_page_path}'
-        if not os.path.exists(path):
-            raise Exception(f'Data page {path} was expected to exist, but does not.')
-        
-        resource_types_data = dict()
-        path = f'./data/data-pages/{data_page_path}'
         data = read_file(path)
+        resource_types_data = dict()
         
         for key, value in data.items():
             resource_key = key
             resource_name_en = value['Name']
-            is_disabled = value['IsDisabled']
+            is_disabled = value.get('IsDisabled', False)#value['IsDisabled']
+            if is_disabled is None:
+                raise Exception(f'No IsDisabled for resource {resource_name_en}')
 
             # Skip resource if...
             if resource_name_en is None or 'Deprecated' in resource_name_en:

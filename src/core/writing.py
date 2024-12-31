@@ -16,6 +16,7 @@ class PageWriter:
         data = read_file(resource_types_data_path, if_no_exist=None)
         if data is None:
             raise Exception(f'Resources not found at {resource_types_data_path}, ensure reading has been done first.')
+        return data
         
     def _write_tracked_pages(self):
         """Write all tracked pages"""
@@ -56,9 +57,9 @@ class PageWriter:
         current_data = read_file(current_data_path)
         
         # Load blueprint data
-        if not os.path.exists(blueprint_path):
-            return #only supporting currently added blueprints
-        blueprint_data = read_file(blueprint_path)
+        blueprint_data = read_file(blueprint_path, if_no_exist=None)
+        if blueprint_data is None:
+            return#only supporting currently added blueprints
 
         # If current data is empty, it means the page doesn't exist
         # so we initialize with the blueprint data
