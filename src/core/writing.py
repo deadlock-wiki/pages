@@ -66,7 +66,7 @@ class PageWriter:
         # If current data is empty, it means the page doesn't exist
         # so we initialize with the blueprint data
         if current_data == '':
-            logger.trace(f'Initializing current-data {os.path.basename(current_data_path)}')
+            #logger.trace(f'Initializing current-data {os.path.basename(current_data_path)}')
             new_data = blueprint_data
         # Otherwise, we merge the current data with the blueprint data
         else:
@@ -79,14 +79,69 @@ class PageWriter:
                 new_data = self._merge_data(current_data, blueprint_data)
 
         # Write new data
-        if new_data == '':
-            return
         os.makedirs(os.path.dirname(new_data_path), exist_ok=True)
         write_file(new_data_path, new_data)
         
     def _merge_data(self, current_data, blueprint_data):
-        """"""
-        return ''
+        """Merge the current data with the blueprint data"""
+
+        """
+        current_data.txt
+            <!-- SectionA -->
+            My current data
+            <!-- SectionA -->
+        
+        and
+
+        blueprint_data.txt
+            <!-- SectionA -->
+            My blueprint data
+            <!-- SectionA -->
+            My additional blueprint data
+
+        transformed into...
+
+        new_data.txt
+            <!-- SectionA -->
+            My current data
+            <!-- SectionA -->
+            My additional blueprint data
+        """
+
+        #<!--EditFreely-Section:<section_name> - Additional info available at [[User:DeadBot/Tags]]-->
+        section_str_prefix = "<!--EditFreely-Section:"
+        section_str_postfix = " - Additional info available at [[User:DeadBot/Tags]]-->"
+
+        lines_to_add = {}
+        # Layer 1: Section name
+        # Layer 2: [lines]
+
+        # Retrieve all named sections in current data
+        current_section_name = None
+        for line in current_data.split('\n'):
+            if section_str_prefix in line and section_str_postfix in line:
+                section_name = line.split(section_str_prefix)[1].split(section_str_postfix)[0]
+                
+                if current_section_name == section_name: # section ending
+                    lines_to_add[section_name].append(line)
+                else: # new section
+                    current_section_name = section_name
+                    if section_name in lines_to_add:
+                        raise Exception(f'Section {section_name} already exists in lines_to_add and was closed')
+                    lines_to_add[section_name] = []
+
+        # Embed content from named sections into blueprint data
+        for section_name, lines in lines_to_add.items():
+            section_tag_string = f'{section_str_prefix}{section_name}{section_str_postfix}'
+            section_start_index = blueprint_data.find(section_tag_string)
+            section_end_index = blueprint_data.find(section_tag_string, 2) # 2nd occurence
+            if section_start_index == -1 or section_end_index == -1:
+                raise Exception(f'Section {section_name} not found in blueprint data')
+            section_content = blueprint_data[section_start_index+len(section_tag_string):section_end_index]
+            section_content = '\n'.join([line for line in section_content.split('\n') if line not in lines])
+            blueprint_data = blueprint_data[:section_start_index+len(section_tag_string)] + section_content + blueprint_data[section_end_index:]
+                
+        return blueprint_data
 
     def _get_blueprint_path(self, current_page_path):
         """Determine the blueprint path for a resource page
