@@ -72,12 +72,12 @@ class PageWriter:
         else:
             # If the data is the same, we don't need to change anything
             if current_data.strip('\n') == blueprint_data.strip('\n'):
-                logger.trace(f'No changes for current-data {os.path.basename(current_data_path)}')
+                logger.trace(f'No changes for current-data {current_data_path}')
                 new_data = blueprint_data
             else:
-                logger.trace(f'Merging changes for current-data {os.path.basename(current_data_path)}')
+                logger.trace(f'Merging changes for current-data {current_data_path}')
                 new_data = self._merge_data(current_data, blueprint_data)
-
+                
         # Write new data
         os.makedirs(os.path.dirname(new_data_path), exist_ok=True)
         write_file(new_data_path, new_data)
@@ -119,29 +119,38 @@ class PageWriter:
         # Retrieve all named sections in current data
         current_section_name = None
         for line in current_data.split('\n'):
-            if section_str_prefix in line and section_str_postfix in line:
+            if section_str_prefix in line and section_str_postfix in line: # section start or end
                 section_name = line.split(section_str_prefix)[1].split(section_str_postfix)[0]
                 
-                if current_section_name == section_name: # section ending
-                    lines_to_add[section_name].append(line)
-                else: # new section
+                if current_section_name != section_name: # section starting
                     current_section_name = section_name
                     if section_name in lines_to_add:
                         raise Exception(f'Section {section_name} already exists in lines_to_add and was closed')
                     lines_to_add[section_name] = []
+                else: # section ending
+                    current_section_name = None
+            elif current_section_name is not None: #currently in a section
+                lines_to_add[section_name].append(line)
+
+        if 'mynote1' in current_data:
+            print('BBBBB',lines_to_add)
 
         # Embed content from named sections into blueprint data
+        temp = blueprint_data
+        new_data = temp
         for section_name, lines in lines_to_add.items():
             section_tag_string = f'{section_str_prefix}{section_name}{section_str_postfix}'
-            section_start_index = blueprint_data.find(section_tag_string)
-            section_end_index = blueprint_data.find(section_tag_string, 2) # 2nd occurence
+            section_start_index = new_data.find(section_tag_string)
+            section_end_index = new_data.find(section_tag_string, 2) # 2nd occurence
             if section_start_index == -1 or section_end_index == -1:
-                raise Exception(f'Section {section_name} not found in blueprint data')
-            section_content = blueprint_data[section_start_index+len(section_tag_string):section_end_index]
-            section_content = '\n'.join([line for line in section_content.split('\n') if line not in lines])
-            blueprint_data = blueprint_data[:section_start_index+len(section_tag_string)] + section_content + blueprint_data[section_end_index:]
+                return blueprint_data
+            #section_content = new_data[section_start_index+len(section_tag_string):section_end_index]
+            section_content = '\n' + '\n'.join(lines) + '\n'
+            if 'mynote1' in current_data:
+                print('AAAAA',section_content)
+            new_data = new_data[:section_start_index+len(section_tag_string)] + section_content + blueprint_data[section_end_index:]
                 
-        return blueprint_data
+        return new_data
 
     def _get_blueprint_path(self, current_page_path):
         """Determine the blueprint path for a resource page
