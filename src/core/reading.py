@@ -21,13 +21,16 @@ class PageReader:
     """
     def __init__(self, wiki_obj):
         self.wiki_obj = wiki_obj
+        self.data_base_path = './data/data-pages'
+        self.blueprint_base_path = './data/blueprints'
+        self.tracked_base_path = './data/tracked-pages'
 
     def _get_blueprint_pages(self):
         """Retrieve's the text of all blueprint pages and saves them"""
         logger.trace('Reading blueprint pages')
 
         # Remove / create dirs
-        validate_dir('./data/blueprints')
+        validate_dir(self.blueprint_base_path)
 
         # Retrieve blueprint page names
         blueprint_page_names = self.wiki_obj.get_prefixed_page_names('DeadBot/blueprints/', 
@@ -35,7 +38,7 @@ class PageReader:
         
         # Read their content and save it to data
         for page_name in blueprint_page_names:
-            file_name = f'./data/blueprints/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
+            file_name = f'{self.blueprint_base_path}/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
             self._read_write_page(page_name, file_name)
 
     def _get_data_pages(self):
@@ -43,7 +46,7 @@ class PageReader:
         logger.trace('Reading data pages')
 
         # Remove / create dirs
-        validate_dir('./data/data-pages')
+        validate_dir(self.data_base_path)
         
         # Retrieve data page names
         data_page_names = ['Data:AbilityData.json',
@@ -52,14 +55,14 @@ class PageReader:
 
         # Read their content and save it to data
         for page_name in data_page_names:
-            file_name = f'./data/data-pages/{page_name.replace("Data:", "")}'
+            file_name = f'{self.data_base_path}/{page_name.replace("Data:", "")}'
             self._read_write_page(page_name, file_name)
 
     def _process_resource_type(self, data_page_path):
         """From a data page, retrieve relevant info for each resource]"""
 
         # Read data to dict
-        path = f'./data/data-pages/{data_page_path}'
+        path = f'{self.data_base_path}/{data_page_path}'
         data = read_file(path)
         resource_types_data = dict()
         
@@ -88,12 +91,12 @@ class PageReader:
         2nd layer - resource key : resource english name
         """
         resource_types_data = dict()
-        for resource_type_file_name in os.listdir('./data/data-pages'):
+        for resource_type_file_name in os.listdir(self.data_base_path):
             resource_type = resource_type_file_name.split('Data.json')[0]
             resource_types_data[resource_type] = self._process_resource_type(resource_type_file_name)
         
         # Output to file for reference
-        resource_types_data_path = './data/tracked-pages/resource_types_data.json'
+        resource_types_data_path = f'{self.tracked_base_path}/resource_types_data.json'
         write_file(resource_types_data_path, resource_types_data)
 
         return resource_types_data
@@ -103,7 +106,7 @@ class PageReader:
         logger.trace('Reading tracked pages')
 
         # Remove / create dirs
-        validate_dir('./data/tracked-pages/current')
+        validate_dir(f'{self.tracked_base_path}/current')
 
         for resource_type, resource_type_data in resource_types_data.items():
             logger.trace(f'Reading {resource_type} pages')
@@ -114,7 +117,7 @@ class PageReader:
                     continue
 
                 def _read_write_page_wrapper(resource_type, resource_name, sub_pages:list[str]=[]):
-                    current_data_dir = './data/tracked-pages/current/'
+                    current_data_dir = f'{self.tracked_base_path}/current/'
 
                     if len(sub_pages) == 0:
                         self._read_write_page(resource_name, f'{current_data_dir}/{resource_type}/{resource_name}.txt')

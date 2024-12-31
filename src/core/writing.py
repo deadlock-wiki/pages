@@ -11,6 +11,9 @@ from src.utils.file import validate_dir, read_file, write_file
 class PageWriter:
     def __init__(self):
         self.resource_types_data = self._load_resources('./data/tracked-pages/resource_types_data.json')
+        self.blueprints_base_path = './data/blueprints'
+        self.current_base_path = './data/tracked-pages/current'
+        self.new_base_path = './data/tracked-pages/new'
 
     def _load_resources(self, resource_types_data_path):
         data = read_file(resource_types_data_path, if_no_exist=None)
@@ -25,8 +28,7 @@ class PageWriter:
                 resource_name = resource_data['Localized']
                 if resource_data['IsDisabled']:
                     continue
-                current_data_dir = './data/tracked-pages/current'
-                path = f'{current_data_dir}/{resource_type}/{resource_name}'
+                path = f'{self.current_base_path}/{resource_type}/{resource_name}'
                 self._write_tracked_dir(path, page_title_key)
                 self._write_tracked_file(f'{path}.txt', page_title_key)
 
@@ -87,14 +89,14 @@ class PageWriter:
         ./data/tracked-pages/current/Ability/<ability_name>/Notes.txt -> ./data/blueprints/Ability/Notes.txt
         """
         # Determine ability name from current_page_path
-        resource_type = current_page_path.split('./data/tracked-pages/current/')[-1].split('/')[0] # Ability
-        full_page_name = current_page_path.split(f'./data/tracked-pages/current/{resource_type}')[-1].split('.txt')[0] # /<ability_name>/Notes
+        resource_type = current_page_path.split(f'{self.current_base_path}/')[-1].split('/')[0] # Ability
+        full_page_name = current_page_path.split(f'{self.current_base_path}/{resource_type}')[-1].split('.txt')[0] # /<ability_name>/Notes
         second_slash_index = full_page_name.find('/', 2)
         if second_slash_index == -1:
             sub_page_name = ''
         else:
             sub_page_name = full_page_name[full_page_name.find('/', 2):] # /Notes
-        blueprint_path = f'./data/blueprints/{resource_type}{sub_page_name}.txt'
+        blueprint_path = f'{self.blueprints_base_path}/{resource_type}{sub_page_name}.txt'
         
         return blueprint_path # ./data/blueprints/Ability/Notes.txt
         
@@ -103,7 +105,7 @@ class PageWriter:
         logger.info('Writing tracked pages')
         
         # Remove / create dirs
-        validate_dir('./data/tracked-pages/new')
+        validate_dir(self.new_base_path)
 
         self._write_tracked_pages()
 
