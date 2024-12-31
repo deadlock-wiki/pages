@@ -5,26 +5,14 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
+from src.utils.logger import setup_logger
 from src.core.reading import PageReader
 from src.core.writing import PageWriter
 
 params = Parameters()
+setup_logger()
 
-# setup custom logger
-logger.remove(0)
-log_level = 'TRACE' if params.is_truthy('VERBOSE') else 'INFO'
-logger.add(
-    sys.stderr,
-    level=log_level,
-    format='<white><dim>{time:YYYY-MM-DD HH:mm:ss.SSS} | </dim>'
-    '</white><level>{level:<7} <dim>|</dim> <normal>{message}</normal></level>',
-)
-# Usage:
-# logger.trace("This is a trace message") - hidden if verbose is false
-# logger.info("This is an info message") - always shown, use lightly
-# logger.warning("This is a warning message") - always shown, use if user 
-#   should be able to decide if they need to take action
-# logger.error("This is an error message") - always shown
+
 
 wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
 page_reader = PageReader(wiki)
