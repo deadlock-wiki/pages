@@ -28,7 +28,7 @@ logger.add(
 
 wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
 page_reader = PageReader(wiki)
-#page_reader.run()
+page_reader.run()
 
 page_writer = PageWriter()
 page_writer.run()
