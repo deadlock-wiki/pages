@@ -5,7 +5,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from loguru import logger
-from src.utils.parameters import Parameters
+from src.utils.logger import setup_logger
 from src.utils.file import validate_dir, read_file, write_file
 from src.utils.constants import DIRS
 
@@ -60,17 +60,23 @@ class PageWriter:
         blueprint_data = read_file(blueprint_path, if_no_exist=None)
         if blueprint_data is None:
             return#only supporting currently added blueprints
+        # Embed key
+        blueprint_data = blueprint_data.replace('<key>', page_title_key)
 
         # If current data is empty, it means the page doesn't exist
         # so we initialize with the blueprint data
         if current_data == '':
+            logger.trace(f'Initializing current-data {os.path.basename(current_data_path)}')
             new_data = blueprint_data
         # Otherwise, we merge the current data with the blueprint data
         else:
-            new_data = self._merge_data(current_data, blueprint_data)
-
-        # Embed resource key
-        new_data = new_data.replace('<key>', page_title_key)
+            # If the data is the same, we don't need to change anything
+            if current_data.strip('\n') == blueprint_data.strip('\n'):
+                logger.trace(f'No changes for current-data {os.path.basename(current_data_path)}')
+                new_data = blueprint_data
+            else:
+                logger.trace(f'Merging changes for current-data {os.path.basename(current_data_path)}')
+                new_data = self._merge_data(current_data, blueprint_data)
 
         # Write new data
         if new_data == '':
@@ -79,6 +85,7 @@ class PageWriter:
         write_file(new_data_path, new_data)
         
     def _merge_data(self, current_data, blueprint_data):
+        """"""
         return ''
 
     def _get_blueprint_path(self, current_page_path):
@@ -108,5 +115,6 @@ class PageWriter:
         self._write_tracked_pages()
 
 if __name__ == '__main__':
+    setup_logger()
     page_writer = PageWriter()
     page_writer.run()

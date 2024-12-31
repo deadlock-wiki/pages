@@ -9,6 +9,7 @@ from src.utils.wiki import Wiki
 from src.utils.parameters import Parameters
 from src.utils.file import validate_dir, read_file, write_file
 from src.utils.constants import DIRS
+from src.utils.logger import setup_logger
 params = Parameters()
 
 
@@ -25,7 +26,7 @@ class PageReader:
 
     def _get_blueprint_pages(self):
         """Retrieve's the text of all blueprint pages and saves them"""
-        logger.trace('Reading blueprint pages')
+        logger.info('Reading blueprint pages')
 
         # Remove / create dirs
         validate_dir(DIRS['blueprints'])
@@ -37,11 +38,12 @@ class PageReader:
         # Read their content and save it to data
         for page_name in blueprint_page_names:
             file_name = f'{DIRS['blueprints']}/{page_name.replace("User:DeadBot/blueprints/", "")}.txt'
+            logger.trace(f'Reading blueprint {page_name}')
             self._read_write_page(page_name, file_name)
 
     def _get_data_pages(self):
         """Retrieve's the text of all data pages and saves them"""
-        logger.trace('Reading data pages')
+        logger.info('Reading data pages')
 
         # Remove / create dirs
         validate_dir(DIRS['data-pages'])
@@ -54,6 +56,7 @@ class PageReader:
         # Read their content and save it to data
         for page_name in data_page_names:
             file_name = f'{DIRS['data-pages']}/{page_name.replace("Data:", "")}'
+            logger.trace(f'Reading data-page {page_name}')
             self._read_write_page(page_name, file_name)
 
     def _process_resource_type(self, data_page_path):
@@ -101,13 +104,13 @@ class PageReader:
 
     def _get_tracked_pages(self, resource_types_data):
         """Retrieves the text of all tracked pages and saves them"""
-        logger.trace('Reading tracked pages')
+        logger.info('Reading tracked pages')
 
         # Remove / create dirs
         validate_dir(DIRS['current-pages'])
 
         for resource_type, resource_type_data in resource_types_data.items():
-            logger.trace(f'Reading {resource_type} pages')
+            logger.info(f'Reading {resource_type} pages')
             for resource_key, resource_data in resource_type_data.items():
                 resource_name = resource_data['Localized']
                 is_disabled = resource_data['IsDisabled']
@@ -131,6 +134,7 @@ class PageReader:
 
     def _read_write_page(self, page_name, file_name):
         """Reads the text of a page and writes it to a file"""
+        logger.trace(f'Reading {page_name} and then saving to {file_name}')
 
         page = self.wiki_obj.site.pages[page_name]
         page_text = page.text()
@@ -151,6 +155,7 @@ class PageReader:
 
 if __name__ == '__main__':
     params = Parameters()
+    setup_logger()
     wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
     read_current = PageReader(wiki)
     read_current.run()
