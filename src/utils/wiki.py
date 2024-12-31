@@ -1,5 +1,9 @@
-import os
 import mwclient
+import sys
+import os
+# Import parents
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+from src.utils.constants import SITE_URL
 
 class Wiki:
     def __init__(self, username, password):
@@ -14,7 +18,7 @@ class Wiki:
         if not self.auth['password']:
             raise Exception('BOT_WIKI_PASS env var is required to upload to wiki')
 
-        self.site = mwclient.Site('deadlocked.wiki', path='/')
+        self.site = mwclient.Site(SITE_URL, path='/')
         self.site.login(self.auth['user'], self.auth['password'])
 
     def _get_namespace_id(self, search_namespace):

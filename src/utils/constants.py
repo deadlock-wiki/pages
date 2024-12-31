@@ -1,3 +1,5 @@
+# Paths are subject to change due to early development phase
+# Allows for quicker changing of paths down the line
 DIRS = {
     'data': './data',
     'blueprints': './data/blueprints',
@@ -9,4 +11,5 @@ DIRS = {
     'resource-types': './data/resource_types_data.json',
 }
 
+# Wiki's URL
 SITE_URL = 'deadlocked.wiki'
