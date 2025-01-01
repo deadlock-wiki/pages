@@ -1,6 +1,5 @@
 import sys
 import os
-import json
 # Import parents
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 

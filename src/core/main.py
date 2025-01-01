@@ -8,6 +8,7 @@ from src.utils.parameters import Parameters
 from src.utils.logger import setup_logger
 from src.core.reading import PageReader
 from src.core.writing import PageWriter
+from src.core.validation import DiffValidator
 
 params = Parameters()
 setup_logger()
@@ -19,4 +20,7 @@ page_reader = PageReader(wiki)
 #page_reader.run()
 
 page_writer = PageWriter()
-page_writer.run()
+#page_writer.run()
+
+diff_validator = DiffValidator()
+diff_validator.run()

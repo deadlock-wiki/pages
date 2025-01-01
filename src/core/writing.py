@@ -1,6 +1,5 @@
 import sys
 import os
-import json
 # Import parents
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
@@ -11,13 +10,10 @@ from src.utils.constants import DIRS
 
 class PageWriter:
     def __init__(self):
-        self.resource_types_data = self._load_resources(DIRS['resource-types'])
+        self.resource_types_data = read_file(DIRS['resource-types'], if_no_exist=None)
+        if self.resource_types_data is None:
+            raise Exception(f'Resources not found at {DIRS['resource-types']}, ensure reading has been done first.')
 
-    def _load_resources(self, resource_types_data_path):
-        data = read_file(resource_types_data_path, if_no_exist=None)
-        if data is None:
-            raise Exception(f'Resources not found at {resource_types_data_path}, ensure reading has been done first.')
-        return data
         
     def _write_tracked_pages(self):
         """Write all tracked pages"""
@@ -142,9 +138,6 @@ class PageWriter:
         temp = blueprint_data
         new_data = temp
         for section_name, lines in lines_to_add.items():
-            #if 'Abrams' in current_data:
-                #print(f'debug1 {section_name}: {lines}')
-
             section_tag_string = f'{section_str_prefix}{section_name}{section_str_postfix}'
             # Find where the section is in the new_data
             section_start_index = new_data.find(section_tag_string)
@@ -160,10 +153,6 @@ class PageWriter:
             # Replace content between start and end index with the new content
             # For now, place an X at the start index and a Y at the end index
             new_data = new_data[:section_start_index + len(section_tag_string)] + section_content + new_data[section_end_index:]
-
-            if 'Abrams' in current_data:
-                print(f'section_name: {section_name}, {section_start_index}, {section_end_index}, sec: {section_content}\n\n\n\n')
-
 
         return new_data
 
