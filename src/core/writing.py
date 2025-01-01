@@ -75,8 +75,11 @@ class PageWriter:
                 logger.trace(f'No changes for current-data {current_data_path}')
                 new_data = blueprint_data
             else:
-                logger.trace(f'Merging changes for current-data {current_data_path}')
                 new_data = self._merge_data(current_data, blueprint_data)
+                if new_data == blueprint_data:
+                    logger.trace(f'No sections found in current-data {current_data_path}, using just the blueprint')
+                else:
+                    logger.trace(f'Sections found in current-data {current_data_path}, merging with blueprint')
                 
         # Write new data
         os.makedirs(os.path.dirname(new_data_path), exist_ok=True)
@@ -121,7 +124,6 @@ class PageWriter:
         for line in current_data.split('\n'):
             if section_str_prefix in line and section_str_postfix in line: # section start or end
                 section_name = line.split(section_str_prefix)[1].split(section_str_postfix)[0]
-                
                 if current_section_name != section_name: # section starting
                     current_section_name = section_name
                     if section_name in lines_to_add:
@@ -131,25 +133,38 @@ class PageWriter:
                     current_section_name = None
             elif current_section_name is not None: #currently in a section
                 lines_to_add[section_name].append(line)
-
-        if 'mynote1' in current_data:
-            print('BBBBB',lines_to_add)
-
+        
+        if len(lines_to_add) == 0:
+            return blueprint_data
+        
+        
         # Embed content from named sections into blueprint data
         temp = blueprint_data
         new_data = temp
         for section_name, lines in lines_to_add.items():
+            #if 'Abrams' in current_data:
+                #print(f'debug1 {section_name}: {lines}')
+
             section_tag_string = f'{section_str_prefix}{section_name}{section_str_postfix}'
+            # Find where the section is in the new_data
             section_start_index = new_data.find(section_tag_string)
-            section_end_index = new_data.find(section_tag_string, 2) # 2nd occurence
+            section_end_index = new_data.find(section_tag_string, section_start_index+len(section_tag_string)) # 2nd occurence
             if section_start_index == -1 or section_end_index == -1:
-                return blueprint_data
-            #section_content = new_data[section_start_index+len(section_tag_string):section_end_index]
-            section_content = '\n' + '\n'.join(lines) + '\n'
-            if 'mynote1' in current_data:
-                print('AAAAA',section_content)
-            new_data = new_data[:section_start_index+len(section_tag_string)] + section_content + blueprint_data[section_end_index:]
-                
+                return new_data
+            
+            # Extract the section content that will be added
+            section_content = '\n' + '\n'.join(lines)
+            if len(lines)>1: # prevents adding an extra line if section content is empty other than the newline
+                section_content += '\n'
+
+            # Replace content between start and end index with the new content
+            # For now, place an X at the start index and a Y at the end index
+            new_data = new_data[:section_start_index + len(section_tag_string)] + section_content + new_data[section_end_index:]
+
+            if 'Abrams' in current_data:
+                print(f'section_name: {section_name}, {section_start_index}, {section_end_index}, sec: {section_content}\n\n\n\n')
+
+
         return new_data
 
     def _get_blueprint_path(self, current_page_path):
