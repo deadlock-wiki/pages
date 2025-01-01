@@ -147,8 +147,10 @@ class PageWriter:
             
             # Extract the section content that will be added
             section_content = '\n' + '\n'.join(lines)
-            if len(lines)>1: # prevents adding an extra line if section content is empty other than the newline
+            if len(lines)>0: # prevents adding an extra line if section content is empty other than the newline
                 section_content += '\n'
+            if 'Abrams' in new_data:
+                print(f'====Adding {section_name} between {section_start_index} and {section_end_index}, content is {section_content}')
 
             # Replace content between start and end index with the new content
             # For now, place an X at the start index and a Y at the end index
