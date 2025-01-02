@@ -11,6 +11,8 @@ def setup_logger():
     # Create log dir if it doesn't exist
     if not os.path.exists(DIRS['logs']):
         os.mkdir(DIRS['logs'])
+    if not os.path.exists(DIRS['logs-archive']):
+        os.mkdir(DIRS['logs-archive'])
 
     # current time in format: 2021-07-01 12-00-00, used in log name
     current_time = time.strftime('%Y-%m-%d %H-%M-%S')
