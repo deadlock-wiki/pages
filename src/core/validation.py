@@ -29,6 +29,8 @@ class DiffValidator:
 
         # Recursive call subdirs
         elif os.path.exists(dir_path):
+            if dir_path.endswith('/Hero'):
+                return # for now, skip Hero pages
             # Iterate files
             for file_or_subdir in os.listdir(dir_path):
                 self._create_diffs_of_dir(f'{dir_path}/{file_or_subdir}')
@@ -41,6 +43,9 @@ class DiffValidator:
         new_data = read_file(new_data_path, if_no_exist=None)
         if new_data is None:
             #logger.trace(f'New data not found at {new_data_path}, skipping diff creation')
+            return
+        if current_data == '':
+            logger.trace('Current data is empty so diff will be same as new data, skipping diff creation')
             return
         
         # Create diff

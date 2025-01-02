@@ -149,9 +149,7 @@ class PageWriter:
             section_content = '\n' + '\n'.join(lines)
             if len(lines)>0: # prevents adding an extra line if section content is empty other than the newline
                 section_content += '\n'
-            if 'Abrams' in new_data:
-                print(f'====Adding {section_name} between {section_start_index} and {section_end_index}, content is {section_content}')
-
+            
             # Replace content between start and end index with the new content
             # For now, place an X at the start index and a Y at the end index
             new_data = new_data[:section_start_index + len(section_tag_string)] + section_content + new_data[section_end_index:]
