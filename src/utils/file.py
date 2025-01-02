@@ -49,5 +49,7 @@ def write_file(path, data, exist_ok=True):
             else:
                 raise Exception(f'Unsupported data type: {type(data)}')
             json.dump(data, f, indent=4)
+        elif path.endswith('.diff'):
+            f.writelines(data)
         else:
             raise Exception(f'Unsupported file extension: {path}')
