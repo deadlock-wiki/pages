@@ -17,10 +17,10 @@ setup_logger()
 
 wiki = Wiki(params.get_param('BOT_WIKI_USER'), params.get_param('BOT_WIKI_PASS'))
 page_reader = PageReader(wiki)
-#page_reader.run()
+page_reader.run()
 
 page_writer = PageWriter()
 #page_writer.run()
 
 diff_validator = DiffValidator()
-diff_validator.run()
+#diff_validator.run()

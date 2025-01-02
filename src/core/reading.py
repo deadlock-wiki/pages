@@ -22,6 +22,7 @@ class PageReader:
     """
     def __init__(self, wiki_obj):
         self.wiki_obj = wiki_obj
+        self.warnings = dict()
 
     def _get_blueprint_pages(self):
         """Retrieve's the text of all blueprint pages and saves them"""
@@ -113,17 +114,15 @@ class PageReader:
             for resource_key, resource_data in resource_type_data.items():
                 resource_name = resource_data['Localized']
                 is_disabled = resource_data['IsDisabled']
-                if is_disabled:
-                    continue
-
+                
                 def _read_write_page_wrapper(resource_type, resource_name, sub_pages:list[str]=[]):
                     current_data_dir = f'{DIRS['current-pages']}/'
 
                     if len(sub_pages) == 0:
-                        self._read_write_page(resource_name, f'{current_data_dir}/{resource_type}/{resource_name}.txt')
+                        self._read_write_page(resource_name, f'{current_data_dir}/{resource_type}/{resource_name}.txt', is_disabled)
                     else:
                         for sub_page in sub_pages:
-                            self._read_write_page(resource_name+'/'+sub_page, f'{current_data_dir}/{resource_type}/{resource_name}/{sub_page}.txt')
+                            self._read_write_page(resource_name+'/'+sub_page, f'{current_data_dir}/{resource_type}/{resource_name}/{sub_page}.txt', is_disabled)
 
                 # Read all pages
                 if resource_type == 'Ability':
@@ -131,25 +130,60 @@ class PageReader:
                 _read_write_page_wrapper(resource_type, resource_name, ['Update history'])
                 _read_write_page_wrapper(resource_type, resource_name)
 
-    def _read_write_page(self, page_name, file_name):
-        """Reads the text of a page and writes it to a file"""
+    def _read_write_page(self, page_name, file_name, is_disabled=False):
+        """Reads the text of a page and writes it to a file
+        If a page exists for a disabled resource, a warning is logged"""
         logger.trace(f'Reading {page_name} and then saving to {file_name}')
 
         page = self.wiki_obj.site.pages[page_name]
         page_text = page.text()
+
+        if is_disabled and page_text != '':
+            warning_type = 'disabled_resources_with_content'
+            logger.warning(f'Page {page_name} is disabled but has content, flagging for review as {warning_type}')
+            self._log_warning('disabled_resources_with_content', page_name)            
 
         # Create the parent directories
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         
         # Write the file
         write_file(file_name, page_text)
-        
+
+    def _log_warning(self, warning_type, page_name):
+        """Adds a warning to a warnings list before writing them all"""
+        if warning_type not in self.warnings:
+            self.warnings[warning_type] = []
+        self.warnings[warning_type].append(page_name)
+
+    def _write_warnings(self):
+        """Writes all warnings to their respective files.
+        Doesn't update existing keys"""
+        for warning_type, warning_list in self.warnings.items():
+            warning_file_path = f'{DIRS['warnings']}/{warning_type}.json'
+
+            # Read existing warning file
+            existing_warnings = read_file(warning_file_path, if_no_exist=None)
+
+            if existing_warnings is None:
+                existing_warnings = dict()
+
+            # Add new warnings to it
+            for warning in warning_list:
+                # If the file doesn't exist or the warning isn't yet present
+                if warning not in existing_warnings:
+                    existing_warnings[warning] = 'Just Flagged'
+
+            # Write the file
+            write_file(warning_file_path, existing_warnings)
+            
+
     def run(self):
         logger.info('Reading current wiki data')
         self._get_blueprint_pages()
         self._get_data_pages()
         resource_types_data = self._process_resource_types_data()
         self._get_tracked_pages(resource_types_data)
+        self._write_warnings()
         
 
 if __name__ == '__main__':

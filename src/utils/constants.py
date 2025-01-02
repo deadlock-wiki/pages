@@ -9,6 +9,9 @@ DIRS = {
     'new-pages': './data/tracked-pages/new',
     'diff-pages': './data/tracked-pages/diff',
     'resource-types': './data/resource_types_data.json',
+    'warnings': './warnings',
+    'logs': './logs',
+    'logs-archive': './logs/archive'
 }
 
 # Wiki's URL
